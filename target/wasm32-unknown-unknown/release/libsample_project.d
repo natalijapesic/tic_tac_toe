@@ -1,0 +1,1 @@
+/home/natalija/rust/tic_tac_toe/target/wasm32-unknown-unknown/release/libsample_project.rlib: /home/natalija/rust/tic_tac_toe/contracts/src/contract.rs /home/natalija/rust/tic_tac_toe/contracts/src/lib.rs /home/natalija/rust/tic_tac_toe/contracts/src/msg.rs /home/natalija/rust/tic_tac_toe/contracts/src/state.rs

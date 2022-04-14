@@ -1,0 +1,12 @@
+/home/natalija/rust/tic_tac_toe/target/debug/deps/base64-7ce0e3159ff27485.rmeta: /home/natalija/.cargo/registry/src/github.com-1ecc6299db9ec823/base64-0.11.0/src/lib.rs /home/natalija/.cargo/registry/src/github.com-1ecc6299db9ec823/base64-0.11.0/src/chunked_encoder.rs /home/natalija/.cargo/registry/src/github.com-1ecc6299db9ec823/base64-0.11.0/src/display.rs /home/natalija/.cargo/registry/src/github.com-1ecc6299db9ec823/base64-0.11.0/src/tables.rs /home/natalija/.cargo/registry/src/github.com-1ecc6299db9ec823/base64-0.11.0/src/write/mod.rs /home/natalija/.cargo/registry/src/github.com-1ecc6299db9ec823/base64-0.11.0/src/write/encoder.rs /home/natalija/.cargo/registry/src/github.com-1ecc6299db9ec823/base64-0.11.0/src/encode.rs /home/natalija/.cargo/registry/src/github.com-1ecc6299db9ec823/base64-0.11.0/src/decode.rs
+
+/home/natalija/rust/tic_tac_toe/target/debug/deps/base64-7ce0e3159ff27485.d: /home/natalija/.cargo/registry/src/github.com-1ecc6299db9ec823/base64-0.11.0/src/lib.rs /home/natalija/.cargo/registry/src/github.com-1ecc6299db9ec823/base64-0.11.0/src/chunked_encoder.rs /home/natalija/.cargo/registry/src/github.com-1ecc6299db9ec823/base64-0.11.0/src/display.rs /home/natalija/.cargo/registry/src/github.com-1ecc6299db9ec823/base64-0.11.0/src/tables.rs /home/natalija/.cargo/registry/src/github.com-1ecc6299db9ec823/base64-0.11.0/src/write/mod.rs /home/natalija/.cargo/registry/src/github.com-1ecc6299db9ec823/base64-0.11.0/src/write/encoder.rs /home/natalija/.cargo/registry/src/github.com-1ecc6299db9ec823/base64-0.11.0/src/encode.rs /home/natalija/.cargo/registry/src/github.com-1ecc6299db9ec823/base64-0.11.0/src/decode.rs
+
+/home/natalija/.cargo/registry/src/github.com-1ecc6299db9ec823/base64-0.11.0/src/lib.rs:
+/home/natalija/.cargo/registry/src/github.com-1ecc6299db9ec823/base64-0.11.0/src/chunked_encoder.rs:
+/home/natalija/.cargo/registry/src/github.com-1ecc6299db9ec823/base64-0.11.0/src/display.rs:
+/home/natalija/.cargo/registry/src/github.com-1ecc6299db9ec823/base64-0.11.0/src/tables.rs:
+/home/natalija/.cargo/registry/src/github.com-1ecc6299db9ec823/base64-0.11.0/src/write/mod.rs:
+/home/natalija/.cargo/registry/src/github.com-1ecc6299db9ec823/base64-0.11.0/src/write/encoder.rs:
+/home/natalija/.cargo/registry/src/github.com-1ecc6299db9ec823/base64-0.11.0/src/encode.rs:
+/home/natalija/.cargo/registry/src/github.com-1ecc6299db9ec823/base64-0.11.0/src/decode.rs:
