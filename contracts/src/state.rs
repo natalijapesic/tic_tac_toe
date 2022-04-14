@@ -8,7 +8,6 @@ pub static CONFIG_KEY: &[u8] = b"config";
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub struct State {
-    pub max_size: i32,
     pub room_id: u64,
     pub board: [Option<Move>; 9],
 
@@ -25,6 +24,10 @@ pub struct State {
 }
 
 impl State {
+    pub fn save<S: Storage>(&self, storage: &mut S) -> StdResult<()> {
+        Singleton::new(storage, b"state").save(self)
+    }
+
     pub fn load<S: Storage>(storage: &S) -> StdResult<State> {
         ReadonlySingleton::new(storage, b"state").load()
     }

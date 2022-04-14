@@ -6,7 +6,6 @@ use crate::state::{GameResult, Move};
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub struct InitMsg {
     pub room_id: u64,
-    pub max_size: u16,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
@@ -26,8 +25,6 @@ pub enum QueryMsg {
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub struct StateResponse {
     pub room_id: u64,
-
-    pub max_size: i32,
 
     pub board: [Option<Move>; 9],
 

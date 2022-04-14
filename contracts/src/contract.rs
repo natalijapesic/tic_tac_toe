@@ -12,7 +12,6 @@ pub fn init<S: Storage, A: Api, Q: Querier>(
     msg: InitMsg,
 ) -> StdResult<InitResponse> {
     let state = State {
-        max_size: 8,
         count_move: 9,
 
         room_id: msg.room_id + 1,
@@ -56,8 +55,10 @@ pub fn try_play<S: Storage, A: Api, Q: Querier>(
 ) -> StdResult<HandleResponse> {
     let mut state = State::load(&deps.storage)?;
 
-    if state.max_size < position || player_move != state.next_move || state.count_move == 0 {
-        return Err(StdError::generic_err(""));
+    debug_print!("{:?}", state);
+
+    if 8 < position || player_move != state.next_move || state.count_move == 0 {
+        return Err(StdError::generic_err("Ne odgovaraju uslovi"));
     }
 
     match state.next_move {
@@ -77,7 +78,7 @@ pub fn try_play<S: Storage, A: Api, Q: Querier>(
     if state.board[position as usize].is_none() {
         state.board[position as usize] = Some(player_move);
     } else {
-        return Err(StdError::generic_err(""));
+        return Err(StdError::generic_err("Nije inicijalizovano"));
     }
 
     let operations: [[i32; 2]; 4] = [[1, -1], [2, -2], [3, -3], [4, -4]];
@@ -103,6 +104,7 @@ pub fn try_play<S: Storage, A: Api, Q: Querier>(
 
             state.count_move -= 1;
 
+            state.save(&mut deps.storage)?;
             return Ok(HandleResponse::default());
         }
     }
@@ -113,6 +115,7 @@ pub fn try_play<S: Storage, A: Api, Q: Querier>(
     }
 
     debug_print("successfully");
+    state.save(&mut deps.storage)?;
     Ok(HandleResponse::default())
 }
 
@@ -129,7 +132,6 @@ fn query_state<S: Storage, A: Api, Q: Querier>(deps: &Extern<S, A, Q>) -> StdRes
     let state = config_read(&deps.storage).load()?;
     Ok(StateResponse {
         room_id: state.room_id,
-        max_size: state.max_size,
         board: state.board,
         count_move: state.count_move,
         result: state.result,
@@ -138,71 +140,61 @@ fn query_state<S: Storage, A: Api, Q: Querier>(deps: &Extern<S, A, Q>) -> StdRes
 
 #[cfg(test)]
 mod tests {
-    // use super::*;
-    // use cosmwasm_std::testing::{mock_dependencies, mock_env};
-    // use cosmwasm_std::{coins, from_binary, StdError};
+    use super::*;
+    use cosmwasm_std::testing::{mock_dependencies, mock_env};
+    use cosmwasm_std::{coins, from_binary};
 
-    // #[test]
-    // fn proper_initialization() {
-    //     let mut deps = mock_dependencies(20, &[]);
+    #[test]
+    fn proper_initialization() {
+        let mut deps = mock_dependencies(20, &[]);
 
-    //     let msg = InitMsg { count: 17 };
-    //     let env = mock_env("creator", &coins(1000, "earth"));
+        let msg = InitMsg { room_id: 17 };
+        let env = mock_env("creator", &coins(1000, "earth"));
 
-    //     // we can just call .unwrap() to assert this was a success
-    //     let res = init(&mut deps, env, msg).unwrap();
-    //     assert_eq!(0, res.messages.len());
+        // we can just call .unwrap() to assert this was a success
+        let res = init(&mut deps, env, msg).unwrap();
+        assert_eq!(0, res.messages.len());
 
-    //     // it worked, let's query the state
-    //     let res = query(&deps, QueryMsg::GetCount {}).unwrap();
-    //     let value: CountResponse = from_binary(&res).unwrap();
-    //     assert_eq!(17, value.count);
-    // }
+        // it worked, let's query the state
+        let res = query(&deps, QueryMsg::GetState {}).unwrap();
+        let value: StateResponse = from_binary(&res).unwrap();
+        assert_eq!(18, value.room_id);
+    }
 
-    // #[test]
-    // fn increment() {
-    //     let mut deps = mock_dependencies(20, &coins(2, "token"));
+    #[test]
+    fn play() {
+        let mut deps = mock_dependencies(20, &coins(2, "token"));
 
-    //     let msg = InitMsg { count: 17 };
-    //     let env = mock_env("creator", &coins(2, "token"));
-    //     let _res = init(&mut deps, env, msg).unwrap();
+        let msg = InitMsg { room_id: 17 };
+        let env = mock_env("creator", &coins(2, "token"));
+        let _res = init(&mut deps, env, msg).unwrap();
 
-    //     // anyone can increment
-    //     let env = mock_env("anyone", &coins(2, "token"));
-    //     let msg = HandleMsg::Increment {};
-    //     let _res = handle(&mut deps, env, msg).unwrap();
+        // anyone can increment
+        let env = mock_env("anyone", &coins(2, "token"));
+        let msg = HandleMsg::Play {
+            player_move: Move::X,
+            position: 4,
+        };
+        let _res = handle(&mut deps, env, msg).unwrap();
 
-    //     // should increase counter by 1
-    //     let res = query(&deps, QueryMsg::GetCount {}).unwrap();
-    //     let value: CountResponse = from_binary(&res).unwrap();
-    //     assert_eq!(18, value.count);
-    // }
-
-    // #[test]
-    // fn reset() {
-    //     let mut deps = mock_dependencies(20, &coins(2, "token"));
-
-    //     let msg = InitMsg { count: 17 };
-    //     let env = mock_env("creator", &coins(2, "token"));
-    //     let _res = init(&mut deps, env, msg).unwrap();
-
-    //     // not anyone can reset
-    //     let unauth_env = mock_env("anyone", &coins(2, "token"));
-    //     let msg = HandleMsg::Reset { count: 5 };
-    //     let res = handle(&mut deps, unauth_env, msg);
-    //     match res {
-    //         Err(StdError::Unauthorized { .. }) => {}
-    //         _ => panic!("Must return unauthorized error"),
-    //     }
-
-    //     // only the original creator can reset the counter
-    //     let auth_env = mock_env("creator", &coins(2, "token"));
-    //     let msg = HandleMsg::Reset { count: 5 };
-    //     let _res = handle(&mut deps, auth_env, msg).unwrap();
-
-    //     // should now be 5
-    //     let res = query(&deps, QueryMsg::GetCount {}).unwrap();
-    //     let value: CountResponse = from_binary(&res).unwrap();
-    //     assert_eq!(5, value.count);
-    // }
+        let res = query(&deps, QueryMsg::GetState {}).unwrap();
+        let response: StateResponse = from_binary(&res).unwrap();
+        let expected_response = StateResponse {
+            room_id: 17,
+            board: [
+                None,
+                None,
+                None,
+                Some(Move::X),
+                None,
+                None,
+                None,
+                None,
+                None,
+            ],
+            count_move: 8,
+            result: GameResult::Playing,
+        };
+        assert_eq!(expected_response, response);
+    }
 }
