@@ -42,36 +42,34 @@ pub fn handle<S: Storage, A: Api, Q: Querier>(
 ) -> StdResult<HandleResponse> {
     match msg {
         HandleMsg::Play {
-            room_id,
             player_move,
             position,
-        } => try_play(deps, env, room_id, player_move, position),
+        } => try_play(deps, env, player_move, position),
     }
 }
 
 pub fn try_play<S: Storage, A: Api, Q: Querier>(
     deps: &mut Extern<S, A, Q>,
-    _env: Env,
-    room_id: i32,
+    env: Env,
     player_move: Move,
     position: i32,
 ) -> StdResult<HandleResponse> {
     let mut state = State::load(&deps.storage)?;
 
     if state.max_size < position || player_move != state.next_move || state.count_move == 0 {
-        StdError()
+        return Err(StdError::generic_err(""));
     }
 
     match state.next_move {
-        X => {
+        Move::X => {
             if state.x_player.is_none() {
-                state.x_player = Some(_env.message.sender);
+                state.x_player = Some(env.message.sender);
             }
         }
 
-        O => {
+        Move::O => {
             if state.o_player.is_none() {
-                state.o_player = Some(_env.message.sender);
+                state.o_player = Some(env.message.sender);
             }
         }
     }
@@ -79,15 +77,15 @@ pub fn try_play<S: Storage, A: Api, Q: Querier>(
     if state.board[position as usize].is_none() {
         state.board[position as usize] = Some(player_move);
     } else {
-        //kako ovde da stane program i da vrati err
+        return Err(StdError::generic_err(""));
     }
 
     let operations: [[i32; 2]; 4] = [[1, -1], [2, -2], [3, -3], [4, -4]];
 
     for op in operations.iter() {
-        let line = 1;
+        let mut line = 1;
         for direction in op.iter() {
-            let current_pos = position + direction;
+            let mut current_pos = position + direction;
 
             while let Some(cell) = state.board.get(current_pos as usize) {
                 if *cell == Some(player_move) {
@@ -99,11 +97,13 @@ pub fn try_play<S: Storage, A: Api, Q: Querier>(
 
         if line == 3 {
             match player_move {
-                X => state.result = GameResult::XWin,
-                O => state.result = GameResult::OWin,
+                Move::X => state.result = GameResult::XWin,
+                Move::O => state.result = GameResult::OWin,
             }
 
-            Ok(HandleResponse::default()) //kako ovde da stane program i da vrati ok
+            state.count_move -= 1;
+
+            return Ok(HandleResponse::default());
         }
     }
 

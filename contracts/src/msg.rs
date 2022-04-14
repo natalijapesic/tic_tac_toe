@@ -12,11 +12,7 @@ pub struct InitMsg {
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 #[serde(rename_all = "snake_case")]
 pub enum HandleMsg {
-    Play {
-        room_id: i32,
-        player_move: Move,
-        position: i32,
-    },
+    Play { player_move: Move, position: i32 },
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]

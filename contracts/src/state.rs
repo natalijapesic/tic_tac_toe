@@ -30,7 +30,7 @@ impl State {
     }
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema, Copy)]
 pub enum Move {
     X,
     O,
