@@ -57,23 +57,25 @@ pub fn try_play<S: Storage, A: Api, Q: Querier>(
 
     debug_print!("{:?}", state);
 
-    if 8 < position || player_move != state.next_move || state.count_move == 0 {
+    if 8 < position || player_move != state.next_move || state.result != GameResult::Playing {
         return Err(StdError::generic_err("Ne odgovaraju uslovi"));
     }
 
-    match state.next_move {
+    state.next_move = match state.next_move {
         Move::X => {
             if state.x_player.is_none() {
                 state.x_player = Some(env.message.sender);
             }
+            Move::O
         }
 
         Move::O => {
             if state.o_player.is_none() {
                 state.o_player = Some(env.message.sender);
             }
+            Move::X
         }
-    }
+    };
 
     if state.board[position as usize].is_none() {
         state.board[position as usize] = Some(player_move);
@@ -81,32 +83,19 @@ pub fn try_play<S: Storage, A: Api, Q: Querier>(
         return Err(StdError::generic_err("Nije inicijalizovano"));
     }
 
-    let operations: [[i32; 2]; 4] = [[1, -1], [2, -2], [3, -3], [4, -4]];
+    //check row
+    let mut line = check_line(position / 3 * 3, state.board.clone(), 0, player_move, 1);
+    if line == 3 {
+        state = set_result(player_move, state);
 
-    for op in operations.iter() {
-        let mut line = 1;
-        for direction in op.iter() {
-            let mut current_pos = position + direction;
+        state.save(&mut deps.storage)?;
+        return Ok(HandleResponse::default());
+    }
 
-            while let Some(cell) = state.board.get(current_pos as usize) {
-                if *cell == Some(player_move) {
-                    line += 1;
-                    current_pos += direction;
-                }
-            }
-        }
-
-        if line == 3 {
-            match player_move {
-                Move::X => state.result = GameResult::XWin,
-                Move::O => state.result = GameResult::OWin,
-            }
-
-            state.count_move -= 1;
-
-            state.save(&mut deps.storage)?;
-            return Ok(HandleResponse::default());
-        }
+    //check column
+    line = check_line(position % 3, state.board.clone(), 0, player_move, 3);
+    if line == 3 {
+        state = set_result(player_move, state);
     }
 
     state.count_move -= 1;
@@ -117,6 +106,36 @@ pub fn try_play<S: Storage, A: Api, Q: Querier>(
     debug_print("successfully");
     state.save(&mut deps.storage)?;
     Ok(HandleResponse::default())
+}
+
+pub fn check_line(
+    mut start: i32,
+    board: [Option<Move>; 9],
+    mut line: i32,
+    player_move: Move,
+    increment: i32,
+) -> i32 {
+    while let Some(cell) = board.get((start) as usize) {
+        if *cell == Some(player_move) && line < 3 {
+            line += 1;
+            start += increment;
+        } else {
+            return line;
+        }
+    }
+
+    line
+}
+
+pub fn set_result(player_move: Move, mut state: State) -> State {
+    match player_move {
+        Move::X => state.result = GameResult::XWin,
+        Move::O => state.result = GameResult::OWin,
+    }
+
+    state.count_move -= 1;
+
+    state
 }
 
 pub fn query<S: Storage, A: Api, Q: Querier>(
