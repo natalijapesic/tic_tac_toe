@@ -1,20 +1,20 @@
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
-use cosmwasm_std::{CanonicalAddr, HumanAddr, StdResult, Storage};
+use cosmwasm_std::{CanonicalAddr, HumanAddr, Storage};
 use cosmwasm_storage::{singleton, singleton_read, ReadonlySingleton, Singleton};
 
 pub static CONFIG_KEY: &[u8] = b"config";
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
-pub struct State {
-    pub room_id: u64,
+pub struct Room {
+    pub id: String,
+
     pub board: [Option<Move>; 9],
 
-    pub admin: CanonicalAddr,
+    pub x_player: HumanAddr,
 
-    pub x_player: Option<HumanAddr>,
-    pub o_player: Option<HumanAddr>,
+    pub o_player: HumanAddr,
 
     pub next_move: Move,
 
@@ -23,14 +23,41 @@ pub struct State {
     pub result: GameResult,
 }
 
-impl State {
-    pub fn save<S: Storage>(&self, storage: &mut S) -> StdResult<()> {
-        Singleton::new(storage, b"state").save(self)
-    }
+impl Room {
+    pub fn check_line(
+        &mut self,
+        mut start: i32,
+        mut line: i32,
+        player_move: Move,
+        increment: i32,
+    ) -> bool {
+        while let Some(cell) = self.board.get((start) as usize) {
+            if *cell == Some(player_move) && line < 3 {
+                line += 1;
+                start += increment;
+            } else {
+                break;
+            }
+        }
 
-    pub fn load<S: Storage>(storage: &S) -> StdResult<State> {
-        ReadonlySingleton::new(storage, b"state").load()
+        if line == 3 {
+            match player_move {
+                Move::X => self.result = GameResult::XWin,
+                Move::O => self.result = GameResult::OWin,
+            }
+
+            self.count_move -= 1;
+
+            return true;
+        }
+
+        false
     }
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+pub struct State {
+    pub admin: CanonicalAddr,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema, Copy)]

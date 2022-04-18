@@ -5,33 +5,69 @@
     {
       "type": "object",
       "required": [
-        "increment"
+        "create_room"
       ],
       "properties": {
-        "increment": {
-          "type": "object"
+        "create_room": {
+          "type": "object",
+          "required": [
+            "o_player",
+            "room_id",
+            "x_player"
+          ],
+          "properties": {
+            "o_player": {
+              "$ref": "#/definitions/HumanAddr"
+            },
+            "room_id": {
+              "type": "string"
+            },
+            "x_player": {
+              "$ref": "#/definitions/HumanAddr"
+            }
+          }
         }
       }
     },
     {
       "type": "object",
       "required": [
-        "reset"
+        "play"
       ],
       "properties": {
-        "reset": {
+        "play": {
           "type": "object",
           "required": [
-            "count"
+            "player_move",
+            "position",
+            "room_id"
           ],
           "properties": {
-            "count": {
+            "player_move": {
+              "$ref": "#/definitions/Move"
+            },
+            "position": {
               "type": "integer",
               "format": "int32"
+            },
+            "room_id": {
+              "type": "string"
             }
           }
         }
       }
     }
-  ]
+  ],
+  "definitions": {
+    "HumanAddr": {
+      "type": "string"
+    },
+    "Move": {
+      "type": "string",
+      "enum": [
+        "X",
+        "O"
+      ]
+    }
+  }
 }

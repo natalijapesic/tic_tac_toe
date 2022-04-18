@@ -1,0 +1,72 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "RoomResponse",
+  "type": "object",
+  "required": [
+    "board",
+    "count_move",
+    "id",
+    "next_move",
+    "o_player",
+    "result",
+    "x_player"
+  ],
+  "properties": {
+    "board": {
+      "type": "array",
+      "items": {
+        "anyOf": [
+          {
+            "$ref": "#/definitions/Move"
+          },
+          {
+            "type": "null"
+          }
+        ]
+      },
+      "maxItems": 9,
+      "minItems": 9
+    },
+    "count_move": {
+      "type": "integer",
+      "format": "uint16",
+      "minimum": 0.0
+    },
+    "id": {
+      "type": "string"
+    },
+    "next_move": {
+      "$ref": "#/definitions/Move"
+    },
+    "o_player": {
+      "$ref": "#/definitions/HumanAddr"
+    },
+    "result": {
+      "$ref": "#/definitions/GameResult"
+    },
+    "x_player": {
+      "$ref": "#/definitions/HumanAddr"
+    }
+  },
+  "definitions": {
+    "GameResult": {
+      "type": "string",
+      "enum": [
+        "XWin",
+        "OWin",
+        "Draw",
+        "Playing"
+      ]
+    },
+    "HumanAddr": {
+      "type": "string"
+    },
+    "Move": {
+      "type": "string",
+      "enum": [
+        "X",
+        "O"
+      ]
+    }
+  }
+}

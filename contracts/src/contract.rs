@@ -1,30 +1,20 @@
 use cosmwasm_std::{
-    debug_print, to_binary, Api, Binary, Env, Extern, HandleResponse, InitResponse, Querier,
-    StdError, StdResult, Storage,
+    debug_print, to_binary, Api, Binary, Env, Extern, HandleResponse, HumanAddr, InitResponse,
+    Querier, StdError, StdResult, Storage,
 };
 
-use crate::msg::{HandleMsg, InitMsg, QueryMsg, StateResponse};
-use crate::state::{config, config_read, GameResult, Move, State};
+use cosmwasm_storage::{prefixed, prefixed_read, typed, typed_read};
+
+use crate::msg::{HandleMsg, InitMsg, QueryMsg, RoomResponse};
+use crate::state::{config, GameResult, Move, Room, State};
 
 pub fn init<S: Storage, A: Api, Q: Querier>(
     deps: &mut Extern<S, A, Q>,
     env: Env,
-    msg: InitMsg,
+    _msg: InitMsg,
 ) -> StdResult<InitResponse> {
     let state = State {
-        count_move: 9,
-
-        room_id: msg.room_id + 1,
-        board: [None; 9],
-
         admin: deps.api.canonical_address(&env.message.sender)?,
-
-        x_player: None,
-        o_player: None,
-
-        next_move: Move::X,
-
-        result: GameResult::Playing,
     };
 
     config(&mut deps.storage).save(&state)?;
@@ -41,101 +31,138 @@ pub fn handle<S: Storage, A: Api, Q: Querier>(
 ) -> StdResult<HandleResponse> {
     match msg {
         HandleMsg::Play {
+            room_id,
             player_move,
             position,
-        } => try_play(deps, env, player_move, position),
+        } => try_play(deps, env, room_id, player_move, position),
+
+        HandleMsg::CreateRoom {
+            room_id,
+            x_player,
+            o_player,
+        } => try_create_room(deps, env, room_id, x_player, o_player),
     }
+}
+
+pub fn try_create_room<S: Storage, A: Api, Q: Querier>(
+    deps: &mut Extern<S, A, Q>,
+    _env: Env,
+    room_id: String,
+    x_player: HumanAddr,
+    o_player: HumanAddr,
+) -> StdResult<HandleResponse> {
+    let mut space = prefixed(b"room", &mut deps.storage);
+    let mut bucket = typed::<_, Room>(&mut space);
+
+    let room = Room {
+        id: room_id.clone(),
+
+        count_move: 9,
+
+        x_player,
+
+        o_player,
+
+        next_move: Move::X,
+
+        result: GameResult::Playing,
+
+        board: [None; 9],
+    };
+
+    bucket.save(room_id.as_bytes(), &room).unwrap();
+
+    return Err(StdError::generic_err("Condition error"));
 }
 
 pub fn try_play<S: Storage, A: Api, Q: Querier>(
     deps: &mut Extern<S, A, Q>,
     env: Env,
+    room_id: String,
     player_move: Move,
     position: i32,
 ) -> StdResult<HandleResponse> {
-    let mut state = State::load(&deps.storage)?;
-
-    debug_print!("{:?}", state);
-
-    if 8 < position || player_move != state.next_move || state.result != GameResult::Playing {
-        return Err(StdError::generic_err("Ne odgovaraju uslovi"));
+    if position > 8 {
+        return Err(StdError::generic_err("Condition error"));
     }
 
-    state.next_move = match state.next_move {
+    let mut space = prefixed(b"room", &mut deps.storage);
+    let mut bucket = typed::<_, Room>(&mut space);
+
+    let mut room = bucket.may_load(room_id.as_bytes())?.unwrap();
+
+    if player_move != room.next_move || room.result != GameResult::Playing {
+        return Err(StdError::generic_err("Condition error"));
+    }
+
+    room.next_move = match room.next_move {
         Move::X => {
-            if state.x_player.is_none() {
-                state.x_player = Some(env.message.sender);
+            if room.x_player != env.message.sender {
+                return Err(StdError::generic_err("Condition error"));
             }
+
             Move::O
         }
 
         Move::O => {
-            if state.o_player.is_none() {
-                state.o_player = Some(env.message.sender);
+            if room.o_player != env.message.sender {
+                return Err(StdError::generic_err("Condition error"));
             }
+
             Move::X
         }
     };
 
-    if state.board[position as usize].is_none() {
-        state.board[position as usize] = Some(player_move);
+    if room.board[position as usize].is_none() {
+        room.board[position as usize] = Some(player_move);
     } else {
-        return Err(StdError::generic_err("Nije inicijalizovano"));
+        return Err(StdError::generic_err("Not initialized"));
     }
 
     //check row
-    let mut line = check_line(position / 3 * 3, state.board.clone(), 0, player_move, 1);
-    if line == 3 {
-        state = set_result(player_move, state);
-
-        state.save(&mut deps.storage)?;
+    if room.check_line(position / 3 * 3, 0, player_move, 1) {
+        let room_a = |_| Ok(room);
+        bucket.update(room_id.as_bytes(), room_a).unwrap();
         return Ok(HandleResponse::default());
     }
 
     //check column
-    line = check_line(position % 3, state.board.clone(), 0, player_move, 3);
-    if line == 3 {
-        state = set_result(player_move, state);
+    if room.check_line(position % 3, 0, player_move, 3) {
+        let room_a = |_| Ok(room);
+        bucket.update(room_id.as_bytes(), room_a).unwrap();
+        return Ok(HandleResponse::default());
     }
 
-    state.count_move -= 1;
-    if state.count_move == 0 && state.result == GameResult::Playing {
-        state.result = GameResult::Draw;
-    }
+    //check diagonals
+    if position % 2 == 0 {
+        if position != 2 && position != 6 {
+            if room.check_line(0, 0, player_move, 4) {
+                let room_a = |_| Ok(room);
+                bucket.update(room_id.as_bytes(), room_a).unwrap();
+                return Ok(HandleResponse::default());
+            }
+        }
 
-    debug_print("successfully");
-    state.save(&mut deps.storage)?;
-    Ok(HandleResponse::default())
-}
-
-pub fn check_line(
-    mut start: i32,
-    board: [Option<Move>; 9],
-    mut line: i32,
-    player_move: Move,
-    increment: i32,
-) -> i32 {
-    while let Some(cell) = board.get((start) as usize) {
-        if *cell == Some(player_move) && line < 3 {
-            line += 1;
-            start += increment;
-        } else {
-            return line;
+        if position != 0 && position != 8 {
+            if room.check_line(2, 0, player_move, 2) {
+                let room_a = |_| Ok(room);
+                bucket.update(room_id.as_bytes(), room_a).unwrap();
+                return Ok(HandleResponse::default());
+            }
         }
     }
 
-    line
-}
-
-pub fn set_result(player_move: Move, mut state: State) -> State {
-    match player_move {
-        Move::X => state.result = GameResult::XWin,
-        Move::O => state.result = GameResult::OWin,
+    room.count_move -= 1;
+    if room.count_move == 0 && room.result == GameResult::Playing {
+        room.result = GameResult::Draw;
     }
 
-    state.count_move -= 1;
+    let room_a = |_| Ok(room);
+    bucket.update(room_id.as_bytes(), room_a).unwrap();
 
-    state
+    debug_print("successfully");
+
+    Ok(HandleResponse::default())
 }
 
 pub fn query<S: Storage, A: Api, Q: Querier>(
@@ -143,17 +170,27 @@ pub fn query<S: Storage, A: Api, Q: Querier>(
     msg: QueryMsg,
 ) -> StdResult<Binary> {
     match msg {
-        QueryMsg::GetState {} => to_binary(&query_state(deps)?),
+        QueryMsg::GetRoom { room_id } => to_binary(&query_room(deps, room_id)?),
     }
 }
 
-fn query_state<S: Storage, A: Api, Q: Querier>(deps: &Extern<S, A, Q>) -> StdResult<StateResponse> {
-    let state = config_read(&deps.storage).load()?;
-    Ok(StateResponse {
-        room_id: state.room_id,
-        board: state.board,
-        count_move: state.count_move,
-        result: state.result,
+fn query_room<S: Storage, A: Api, Q: Querier>(
+    deps: &Extern<S, A, Q>,
+    room_id: String,
+) -> StdResult<RoomResponse> {
+    let space = prefixed_read(b"room", &deps.storage);
+    let bucket = typed_read::<_, Room>(&space);
+
+    let room = bucket.load(room_id.as_bytes()).unwrap();
+
+    Ok(RoomResponse {
+        id: room.id,
+        next_move: room.next_move,
+        board: room.board,
+        count_move: room.count_move,
+        result: room.result,
+        x_player: room.x_player,
+        o_player: room.o_player,
     })
 }
 
@@ -164,42 +201,66 @@ mod tests {
     use cosmwasm_std::{coins, from_binary};
 
     #[test]
-    fn proper_initialization() {
+    fn create_room() {
         let mut deps = mock_dependencies(20, &[]);
+        let msg = InitMsg {};
+        let env = mock_env("creator", &coins(2, "token"));
+        let _res = init(&mut deps, env, msg).unwrap();
 
-        let msg = InitMsg { room_id: 17 };
-        let env = mock_env("creator", &coins(1000, "earth"));
+        let env = mock_env("anyone", &coins(2, "token"));
+        let msg = HandleMsg::CreateRoom {
+            room_id: "tuturu".to_string(),
+            x_player: HumanAddr::from("secret1ap26qrlp8mcq2pg6r47w43l0y8zkqm8a450s03"),
+            o_player: HumanAddr::from("secret1ap26qrlp8mcq2pg6r47w43l0y8zkqm8a450s03"),
+        };
+        let _res = handle(&mut deps, env, msg).unwrap();
 
-        // we can just call .unwrap() to assert this was a success
-        let res = init(&mut deps, env, msg).unwrap();
-        assert_eq!(0, res.messages.len());
-
-        // it worked, let's query the state
-        let res = query(&deps, QueryMsg::GetState {}).unwrap();
-        let value: StateResponse = from_binary(&res).unwrap();
-        assert_eq!(18, value.room_id);
+        let res = query(
+            &deps,
+            QueryMsg::GetRoom {
+                room_id: "tuturu".to_string(),
+            },
+        )
+        .unwrap();
+        let response: RoomResponse = from_binary(&res).unwrap();
+        let expected_response = RoomResponse {
+            id: "tuturu".to_string(),
+            board: [None; 9],
+            count_move: 8,
+            result: GameResult::Playing,
+            next_move: Move::X,
+            x_player: HumanAddr::from("secret1ap26qrlp8mcq2pg6r47w43l0y8zkqm8a450s03"),
+            o_player: HumanAddr::from("secret1ap26qrlp8mcq2pg6r47w43l0y8zkqm8a450s03"),
+        };
+        assert_eq!(expected_response, response);
     }
 
     #[test]
     fn play() {
         let mut deps = mock_dependencies(20, &coins(2, "token"));
 
-        let msg = InitMsg { room_id: 17 };
+        let msg = InitMsg {};
         let env = mock_env("creator", &coins(2, "token"));
         let _res = init(&mut deps, env, msg).unwrap();
 
-        // anyone can increment
         let env = mock_env("anyone", &coins(2, "token"));
         let msg = HandleMsg::Play {
+            room_id: "tuturu".to_string(),
             player_move: Move::X,
             position: 4,
         };
         let _res = handle(&mut deps, env, msg).unwrap();
 
-        let res = query(&deps, QueryMsg::GetState {}).unwrap();
-        let response: StateResponse = from_binary(&res).unwrap();
-        let expected_response = StateResponse {
-            room_id: 17,
+        let res = query(
+            &deps,
+            QueryMsg::GetRoom {
+                room_id: "tuturu".to_string(),
+            },
+        )
+        .unwrap();
+        let response: RoomResponse = from_binary(&res).unwrap();
+        let expected_response = RoomResponse {
+            id: "tuturu".to_string(),
             board: [
                 None,
                 None,
@@ -211,8 +272,11 @@ mod tests {
                 None,
                 None,
             ],
-            count_move: 8,
+            count_move: 7,
             result: GameResult::Playing,
+            next_move: Move::O,
+            x_player: HumanAddr::from("secret1ap26qrlp8mcq2pg6r47w43l0y8zkqm8a450s03"),
+            o_player: HumanAddr::from("secret1ap26qrlp8mcq2pg6r47w43l0y8zkqm8a450s03"),
         };
         assert_eq!(expected_response, response);
     }

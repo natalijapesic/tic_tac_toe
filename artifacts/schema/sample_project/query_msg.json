@@ -5,11 +5,19 @@
     {
       "type": "object",
       "required": [
-        "get_count"
+        "get_room"
       ],
       "properties": {
-        "get_count": {
-          "type": "object"
+        "get_room": {
+          "type": "object",
+          "required": [
+            "room_id"
+          ],
+          "properties": {
+            "room_id": {
+              "type": "string"
+            }
+          }
         }
       }
     }
