@@ -1,12 +1,14 @@
 use cosmwasm_std::HumanAddr;
 use schemars::JsonSchema;
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize, Serialize};
 
 pub static ROOM_KEY: &[u8] = b"room";
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub struct Room {
-    pub id: String,
+    pub id: u32,
+
+    pub name: String,
 
     pub board: [Option<Move>; 9],
 
@@ -18,16 +20,40 @@ pub struct Room {
 
     pub count_move: u16,
 
-    pub result: GameResult,
+    pub result: Option<GameResult>,
+
+    pub state: GameState,
 }
 
 impl Room {
+    pub fn new(id: u32, name: String, x_player: HumanAddr, o_player: HumanAddr) -> Self {
+        Self {
+            id,
+
+            count_move: 9,
+
+            x_player,
+
+            o_player,
+
+            next_move: Move::X,
+
+            result: None,
+
+            board: [None; 9],
+
+            name,
+
+            state: GameState::Playing,
+        }
+    }
+
     pub fn check_line(
         &mut self,
-        mut start: i32,
-        mut line: i32,
+        mut start: u8,
+        mut line: u8,
         player_move: Move,
-        increment: i32,
+        increment: u8,
     ) -> bool {
         while let Some(cell) = self.board.get((start) as usize) {
             if *cell == Some(player_move) && line < 3 {
@@ -64,5 +90,10 @@ pub enum GameResult {
     XWin,
     OWin,
     Draw,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+pub enum GameState {
+    GameOver,
     Playing,
 }

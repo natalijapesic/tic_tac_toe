@@ -6,17 +6,18 @@ use cosmwasm_std::{
 use cosmwasm_storage::{prefixed, prefixed_read, typed, typed_read};
 
 use crate::msg::{HandleMsg, InitMsg, QueryMsg, RoomResponse};
-use crate::room::{Room, GameResult, Move};
+use crate::room::{GameResult, Move, Room};
 use crate::state::{config, State};
 
 pub fn init<S: Storage, A: Api, Q: Querier>(
     deps: &mut Extern<S, A, Q>,
     env: Env,
-    _msg: InitMsg,
+    msg: InitMsg,
 ) -> StdResult<InitResponse> {
-    let state = State {
-        admin: deps.api.canonical_address(&env.message.sender)?,
-    };
+    let state = State::new(
+        msg.count_rooms,
+        deps.api.canonical_address(&env.message.sender)?,
+    );
 
     config(&mut deps.storage).save(&state)?;
 
@@ -38,38 +39,26 @@ pub fn handle<S: Storage, A: Api, Q: Querier>(
         } => try_play(deps, env, room_id, player_move, position),
 
         HandleMsg::CreateRoom {
-            room_id,
+            name,
             x_player,
             o_player,
-        } => try_create_room(deps, env, room_id, x_player, o_player),
+        } => try_create_room(deps, env, name, x_player, o_player),
     }
 }
 
 pub fn try_create_room<S: Storage, A: Api, Q: Querier>(
     deps: &mut Extern<S, A, Q>,
     _env: Env,
-    room_id: String,
+    name: String,
     x_player: HumanAddr,
     o_player: HumanAddr,
 ) -> StdResult<HandleResponse> {
     let mut space = prefixed(b"room", &mut deps.storage);
     let mut bucket = typed::<_, Room>(&mut space);
 
-    let room = Room {
-        id: room_id.clone(),
+    //incerement count_room in state
 
-        count_move: 9,
-
-        x_player,
-
-        o_player,
-
-        next_move: Move::X,
-
-        result: GameResult::Playing,
-
-        board: [None; 9],
-    };
+    let room = Room::new(2, name, x_player, o_player);
 
     bucket.save(room_id.as_bytes(), &room).unwrap();
     return Ok(HandleResponse::default());
@@ -80,7 +69,7 @@ pub fn try_play<S: Storage, A: Api, Q: Querier>(
     env: Env,
     room_id: String,
     player_move: Move,
-    position: i32,
+    position: u8,
 ) -> StdResult<HandleResponse> {
     if position > 8 {
         return Err(StdError::generic_err("Conditions not met"));
