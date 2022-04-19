@@ -1,0 +1,73 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "HandleMsg",
+  "anyOf": [
+    {
+      "type": "object",
+      "required": [
+        "create_room"
+      ],
+      "properties": {
+        "create_room": {
+          "type": "object",
+          "required": [
+            "o_player",
+            "room_id",
+            "x_player"
+          ],
+          "properties": {
+            "o_player": {
+              "$ref": "#/definitions/HumanAddr"
+            },
+            "room_id": {
+              "type": "string"
+            },
+            "x_player": {
+              "$ref": "#/definitions/HumanAddr"
+            }
+          }
+        }
+      }
+    },
+    {
+      "type": "object",
+      "required": [
+        "play"
+      ],
+      "properties": {
+        "play": {
+          "type": "object",
+          "required": [
+            "player_move",
+            "position",
+            "room_id"
+          ],
+          "properties": {
+            "player_move": {
+              "$ref": "#/definitions/Move"
+            },
+            "position": {
+              "type": "integer",
+              "format": "int32"
+            },
+            "room_id": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    }
+  ],
+  "definitions": {
+    "HumanAddr": {
+      "type": "string"
+    },
+    "Move": {
+      "type": "string",
+      "enum": [
+        "X",
+        "O"
+      ]
+    }
+  }
+}

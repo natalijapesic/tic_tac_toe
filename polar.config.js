@@ -1,14 +1,12 @@
 const accounts = [
   {
     name: 'a',
-    address: 'secret1ap26qrlp8mcq2pg6r47w43l0y8zkqm8a450s03',
-    mnemonic: 'snack cable erode art lift better october drill hospital clown erase address'
-  },
+    address: 'secret1cfhxllwd5ku840wzk3zuh9xcync4svlnv27ayf',
+    mnemonic: 'bubble viable steak just canoe range announce video april junk bless base neither second swamp lazy illegal script kiss obvious example pelican symptom hollow' },
   {
     name: 'b',
-    address: 'secret1ap26qrlp8mcq2pg6r47w43l0y8zkqm8a450s03',
-    mnemonic: 'sorry object nation also century glove small tired parrot avocado pulp purchase'
-  }
+    address: 'secret18yac3wqw0f25wsjhffuf9f5wdaq7ttwnqpvl6d',
+    mnemonic: 'nest tired bulb elephant combine file volume sick gasp link warm quote resemble toilet foster verify settle bench theory bamboo expose online globe antenna'  }
 ];
 
 const networks = {
@@ -16,41 +14,12 @@ const networks = {
     endpoint: 'http://localhost:1337/',
     accounts: accounts,
   },
-  // Pulsar-2
-  testnet: {
-    endpoint: 'http://testnet.securesecrets.org:1317/',
-    chainId: 'pulsar-2',
-    accounts: accounts,
-  },
-  development: {
-    endpoint: 'tcp://0.0.0.0:26656',
-    chainId: 'enigma-pub-testnet-3',
-    types: {}
-  },
-  // Supernova Testnet
-  supernova: {
-    endpoint: 'http://bootstrap.supernova.enigma.co:1317',
-    chainId: 'supernova-2',
-    accounts: accounts,
-    types: {},
-    fees: {
-      upload: {
-          amount: [{ amount: "500000", denom: "uscrt" }],
-          gas: "2000000",
-      },
-      init: {
-          amount: [{ amount: "125000", denom: "uscrt" }],
-          gas: "500000",
-      },
-    }
-  }
 };
 
 module.exports = {
   networks: {
-    default: networks.testnet,
-    localnet: networks.localnet,
-    development: networks.development
+    default: networks.localnet,
+    
   },
   mocha: {
     timeout: 60000

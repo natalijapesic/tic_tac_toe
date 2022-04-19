@@ -6,7 +6,8 @@ use cosmwasm_std::{
 use cosmwasm_storage::{prefixed, prefixed_read, typed, typed_read};
 
 use crate::msg::{HandleMsg, InitMsg, QueryMsg, RoomResponse};
-use crate::state::{config, GameResult, Move, Room, State};
+use crate::room::{Room, GameResult, Move};
+use crate::state::{config, State};
 
 pub fn init<S: Storage, A: Api, Q: Querier>(
     deps: &mut Extern<S, A, Q>,
@@ -76,28 +77,27 @@ pub fn try_create_room<S: Storage, A: Api, Q: Querier>(
 
 pub fn try_play<S: Storage, A: Api, Q: Querier>(
     deps: &mut Extern<S, A, Q>,
-    _env: Env,
+    env: Env,
     room_id: String,
     player_move: Move,
     position: i32,
 ) -> StdResult<HandleResponse> {
     if position > 8 {
-        return Err(StdError::generic_err("Condition error1"));
+        return Err(StdError::generic_err("Conditions not met"));
     }
 
     let mut space = prefixed(b"room", &mut deps.storage);
     let mut bucket = typed::<_, Room>(&mut space);
-
-    let mut room = bucket.load(room_id.as_bytes())?;
+    let mut room = bucket.load(room_id.as_bytes()).expect("load room");
 
     if player_move != room.next_move || room.result != GameResult::Playing {
-        return Err(StdError::generic_err("Condition error2"));
+        return Err(StdError::generic_err("Conditions not met"));
     }
 
     room.next_move = match room.next_move {
         Move::X => {
             // if room.x_player != env.message.sender {
-            //     return Err(StdError::generic_err("Condition error"));
+            //     return Err(StdError::generic_err("Conditions not met"));
             // }
 
             Move::O
@@ -105,7 +105,7 @@ pub fn try_play<S: Storage, A: Api, Q: Querier>(
 
         Move::O => {
             // if room.o_player != env.message.sender {
-            //     return Err(StdError::generic_err("Condition error"));
+            //     return Err(StdError::generic_err("Conditions not met"));
             // }
 
             Move::X
@@ -120,15 +120,13 @@ pub fn try_play<S: Storage, A: Api, Q: Querier>(
 
     //check row
     if room.check_line(position / 3 * 3, 0, player_move, 1) {
-        let room_a = |_| Ok(room);
-        bucket.update(room_id.as_bytes(), room_a).unwrap();
+        bucket.save(room_id.as_bytes(), &room).unwrap();
         return Ok(HandleResponse::default());
     }
 
     //check column
     if room.check_line(position % 3, 0, player_move, 3) {
-        let room_a = |_| Ok(room);
-        bucket.update(room_id.as_bytes(), room_a).unwrap();
+        bucket.save(room_id.as_bytes(), &room).unwrap();
         return Ok(HandleResponse::default());
     }
 
@@ -136,30 +134,25 @@ pub fn try_play<S: Storage, A: Api, Q: Querier>(
     if position % 2 == 0 {
         if position != 2 && position != 6 {
             if room.check_line(0, 0, player_move, 4) {
-                let room_a = |_| Ok(room);
-                bucket.update(room_id.as_bytes(), room_a).unwrap();
+                bucket.save(room_id.as_bytes(), &room).unwrap();
                 return Ok(HandleResponse::default());
             }
         }
 
         if position != 0 && position != 8 {
             if room.check_line(2, 0, player_move, 2) {
-                let room_a = |_| Ok(room);
-                bucket.update(room_id.as_bytes(), room_a).unwrap();
+                bucket.save(room_id.as_bytes(), &room).unwrap();
                 return Ok(HandleResponse::default());
             }
         }
     }
 
     room.count_move -= 1;
-    if room.count_move == 0 && room.result == GameResult::Playing {
+    if room.count_move == 0 {
         room.result = GameResult::Draw;
     }
 
-    let room_a = |_| Ok(room);
-    bucket.update(room_id.as_bytes(), room_a).unwrap();
-
-    debug_print("successfully");
+    bucket.save(room_id.as_bytes(), &room).unwrap();
 
     Ok(HandleResponse::default())
 }
@@ -199,25 +192,29 @@ mod tests {
     use cosmwasm_std::testing::{mock_dependencies, mock_env};
     use cosmwasm_std::{coins, from_binary};
 
-    #[test]
-    fn create_room() {
+    fn init_room() -> Extern<
+        cosmwasm_std::MemoryStorage,
+        cosmwasm_std::testing::MockApi,
+        cosmwasm_std::testing::MockQuerier,
+    > {
         let mut deps = mock_dependencies(20, &[]);
         let msg = InitMsg {};
-        let env = mock_env("creator", &coins(2, "token"));
+        let env = mock_env("albis", &coins(2, "token"));
         let _res = init(&mut deps, env, msg).unwrap();
 
         let env = mock_env("anyone", &coins(2, "token"));
         let msg = HandleMsg::CreateRoom {
             room_id: "tuturu".to_string(),
-            x_player: HumanAddr::from("secret1ap26qrlp8mcq2pg6r47w43l0y8zkqm8a450s03"),
-            o_player: HumanAddr::from("secret1ap26qrlp8mcq2pg6r47w43l0y8zkqm8a450s03"),
+            x_player: HumanAddr::from("albis"),
+            o_player: HumanAddr::from("balbis"),
         };
-        let _res = match handle(&mut deps, env, msg) {
-            Ok(_) => {}
-            Err(err) => {
-                panic!("{}", err)
-            }
-        };
+        let _res = handle(&mut deps, env, msg).unwrap();
+
+        deps
+    }
+    #[test]
+    fn create_room() {
+        let deps = init_room();
 
         let res = query(
             &deps,
@@ -226,6 +223,7 @@ mod tests {
             },
         )
         .unwrap();
+
         let response: RoomResponse = from_binary(&res).unwrap();
         let expected_response = RoomResponse {
             id: "tuturu".to_string(),
@@ -233,19 +231,15 @@ mod tests {
             count_move: 9,
             result: GameResult::Playing,
             next_move: Move::X,
-            x_player: HumanAddr::from("secret1ap26qrlp8mcq2pg6r47w43l0y8zkqm8a450s03"),
-            o_player: HumanAddr::from("secret1ap26qrlp8mcq2pg6r47w43l0y8zkqm8a450s03"),
+            x_player: HumanAddr::from("albis"),
+            o_player: HumanAddr::from("balbis"),
         };
         assert_eq!(expected_response, response);
     }
 
     #[test]
     fn play() {
-        let mut deps = mock_dependencies(20, &coins(2, "token"));
-
-        let msg = InitMsg {};
-        let env = mock_env("creator", &coins(2, "token"));
-        let _res = init(&mut deps, env, msg).unwrap();
+        let mut deps = init_room();
 
         let env = mock_env("anyone", &coins(2, "token"));
         let msg = HandleMsg::Play {
@@ -254,12 +248,7 @@ mod tests {
             position: 4,
         };
 
-        let _res = match handle(&mut deps, env, msg) {
-            Ok(_) => {}
-            Err(err) => {
-                panic!("{}", err)
-            }
-        };
+        let _res = handle(&mut deps, env, msg).unwrap();
 
         let res = query(
             &deps,
@@ -268,6 +257,7 @@ mod tests {
             },
         )
         .unwrap();
+
         let response: RoomResponse = from_binary(&res).unwrap();
         let expected_response = RoomResponse {
             id: "tuturu".to_string(),
@@ -285,8 +275,8 @@ mod tests {
             count_move: 8,
             result: GameResult::Playing,
             next_move: Move::O,
-            x_player: HumanAddr::from("secret1ap26qrlp8mcq2pg6r47w43l0y8zkqm8a450s03"),
-            o_player: HumanAddr::from("secret1ap26qrlp8mcq2pg6r47w43l0y8zkqm8a450s03"),
+            x_player: HumanAddr::from("albis"),
+            o_player: HumanAddr::from("balbis"),
         };
         assert_eq!(expected_response, response);
     }

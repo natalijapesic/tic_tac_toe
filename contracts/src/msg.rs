@@ -2,7 +2,7 @@ use cosmwasm_std::HumanAddr;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
-use crate::state::{GameResult, Move};
+use crate::room::{GameResult, Move};
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub struct InitMsg {}
