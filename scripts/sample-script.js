@@ -1,6 +1,6 @@
 const { Contract, getAccountByName } = require("secret-polar");
 
-async function run () {
+async function run() {
   const contract_owner = getAccountByName("a");
   const contract = new Contract("tic_tac_toe");
   await contract.parseSchema();
@@ -14,14 +14,14 @@ async function run () {
   );
   console.log(deploy_response);
 
-  const contract_info = await contract.instantiate({"count_room": 0}, "deploy test", contract_owner);
+  const contract_info = await contract.instantiate({ count_room: 0 }, `${Date.now()}/deploy test`, contract_owner);
   console.log(contract_info);
 
 
-  const create_room = await contract.tx.create_room({account: contract_owner}, {name:"nignite", x_player: "secret1ucs35c2v7jwmjun5yjf94vjasn275aqa7e6eeh", o_player: "secret14m8fqygjmldtvllwxmvjxw97de7dfelwuzh29c"});
+  const create_room = await contract.tx.create_room({ account: contract_owner }, { name: "nignite", x_player: "secret1s8c9p6vzxqucuh7s4egl9h62akpsnnuegppuy6", o_player: "secret16jpy8nlezmd6nkv6sqa2a2rdflltf8xd3z8r9y" });
   console.log(create_room);
 
-  const response = await contract.query.room({"room_id": 1});
+  const response = await contract.query.room({room_id: 1});
   console.log(response);
 
   const transferAmount = [{"denom": "uscrt", "amount": "15000000"}] // 15 SCRT
@@ -86,7 +86,7 @@ async function run () {
   const responseQ3 = await contract.query.room({room_id: 1});
   console.log(responseQ3);
 
-  
+
 }
 
 module.exports = { default: run };

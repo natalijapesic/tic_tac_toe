@@ -1,11 +1,11 @@
 const accounts = [
   {
     name: 'a',
-    address: 'secret1ucs35c2v7jwmjun5yjf94vjasn275aqa7e6eeh',
-    mnemonic: 'zoo chat super danger original shell cabin blind sweet sad indoor test diesel try device corn follow leg hedgehog attract fix skate announce diesel'},
+    address: 'secret1s8c9p6vzxqucuh7s4egl9h62akpsnnuegppuy6',
+    mnemonic: 'enlist spoil lake cactus lion toddler tooth design sorry arrow reflect crack want brown endless keen shoe captain sunny disagree pizza giraffe easy rocket'},
   { name: 'b',
-    address: 'secret14m8fqygjmldtvllwxmvjxw97de7dfelwuzh29c',
-    mnemonic: 'trend wide kit winner vacant afraid ceiling feel reject fan school another destroy fold discover inhale install coconut local candy option disorder fiber junk'
+    address: 'secret16jpy8nlezmd6nkv6sqa2a2rdflltf8xd3z8r9y',
+    mnemonic: 'whisper sun floor awful peace pony noodle gate silent mistake spot seat civil crucial leaf taxi solid brown program author emerge false frequent jewel'
   }
 ];
 

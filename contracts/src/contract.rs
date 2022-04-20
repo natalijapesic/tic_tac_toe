@@ -87,6 +87,12 @@ pub fn try_play<S: Storage, A: Api, Q: Querier>(
 
     room.validate(&env.message.sender, position)?;
 
+    room.current_player = if player_move == Move::O {
+        room.x_player.clone()
+    } else {
+        room.o_player.clone()
+    };
+
     room.board[position as usize] = Some(player_move);
 
     let result = room

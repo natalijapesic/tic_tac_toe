@@ -59,12 +59,6 @@ impl Room {
         player_move: &Move,
         storage: &mut S,
     ) -> StdResult<bool> {
-        self.current_player = if *player_move == Move::O {
-            self.x_player.clone()
-        } else {
-            self.o_player.clone()
-        };
-
         //check row
         if self.check_line(position / 3 * 3, 0, *player_move, 1) {
             self.save(storage)?;
@@ -136,9 +130,9 @@ impl Room {
             return CustomError::RoomState.message();
         }
 
-        if self.current_player != *sender {
-            return CustomError::CurrentPlayer.message();
-        }
+        // if self.current_player != *sender {
+        //     return CustomError::CurrentPlayer.message();
+        // }
 
         if self.board[position as usize].is_some() {
             return CustomError::InitPosition.message();
@@ -149,12 +143,12 @@ impl Room {
 
     pub fn save<S: Storage>(&self, storage: &mut S) -> StdResult<()> {
         let mut space = PrefixedStorage::new(ROOM_KEY, storage);
-        TypedStorage::new(&mut space).save(&self.id.to_be_bytes(), self)
+        TypedStorage::new(&mut space).save(&self.id.to_string().as_bytes(), self)
     }
 
     pub fn load<S: Storage>(id: u16, storage: &S) -> StdResult<Room> {
         let space = ReadonlyPrefixedStorage::new(ROOM_KEY, storage);
-        ReadonlyTypedStorage::new(&space).load(&id.to_be_bytes())
+        ReadonlyTypedStorage::new(&space).load(&id.to_string().as_bytes())
     }
 }
 
