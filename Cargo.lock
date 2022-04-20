@@ -281,6 +281,7 @@ dependencies = [
  "cosmwasm-storage",
  "schemars",
  "serde",
+ "serde_json",
  "snafu",
 ]
 

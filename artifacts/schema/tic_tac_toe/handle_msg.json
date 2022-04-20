@@ -11,16 +11,16 @@
         "create_room": {
           "type": "object",
           "required": [
+            "name",
             "o_player",
-            "room_id",
             "x_player"
           ],
           "properties": {
+            "name": {
+              "type": "string"
+            },
             "o_player": {
               "$ref": "#/definitions/HumanAddr"
-            },
-            "room_id": {
-              "type": "string"
             },
             "x_player": {
               "$ref": "#/definitions/HumanAddr"
@@ -48,10 +48,13 @@
             },
             "position": {
               "type": "integer",
-              "format": "int32"
+              "format": "uint8",
+              "minimum": 0.0
             },
             "room_id": {
-              "type": "string"
+              "type": "integer",
+              "format": "uint16",
+              "minimum": 0.0
             }
           }
         }

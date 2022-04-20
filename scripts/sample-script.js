@@ -14,14 +14,14 @@ async function run () {
   );
   console.log(deploy_response);
 
-  const contract_info = await contract.instantiate({}, "deploy test", contract_owner);
+  const contract_info = await contract.instantiate({"count_room": 0}, "deploy test", contract_owner);
   console.log(contract_info);
 
 
-  const create_room = await contract.tx.create_room({account: contract_owner}, {room_id:"nignite", x_player: "secret1cfhxllwd5ku840wzk3zuh9xcync4svlnv27ayf", o_player: "secret18yac3wqw0f25wsjhffuf9f5wdaq7ttwnqpvl6d"});
+  const create_room = await contract.tx.create_room({account: contract_owner}, {name:"nignite", x_player: "secret1ucs35c2v7jwmjun5yjf94vjasn275aqa7e6eeh", o_player: "secret14m8fqygjmldtvllwxmvjxw97de7dfelwuzh29c"});
   console.log(create_room);
 
-  const response = await contract.query.get_room({room_id:"nignite"});
+  const response = await contract.query.room({"room_id": 1});
   console.log(response);
 
   const transferAmount = [{"denom": "uscrt", "amount": "15000000"}] // 15 SCRT
@@ -31,59 +31,59 @@ async function run () {
   }
 
   const response1 = await contract.tx.play(
-    {account: contract_owner, transferAmount: transferAmount},{ room_id: "nignite", player_move: "X", position: 2} 
+    {account: contract_owner, transferAmount: transferAmount},{ room_id: 1, player_move: "X", position: 2} 
   );
 
   console.log(response1);
 
   const response2 = await contract.tx.play(
-    {account: contract_owner, transferAmount: transferAmount},{ room_id: "nignite", player_move: "O", position: 1} 
+    {account: contract_owner, transferAmount: transferAmount},{ room_id: 1, player_move: "O", position: 1} 
   );
 
   console.log(response2);
 
   const response3 = await contract.tx.play(
-    {account: contract_owner, transferAmount: transferAmount},{ room_id: "nignite", player_move: "X", position: 4} 
+    {account: contract_owner, transferAmount: transferAmount},{ room_id: 1, player_move: "X", position: 4} 
   );
 
   console.log(response3);
   const response4 = await contract.tx.play(
-    {account: contract_owner, transferAmount: transferAmount},{ room_id: "nignite", player_move: "O", position: 6} 
+    {account: contract_owner, transferAmount: transferAmount},{ room_id: 1, player_move: "O", position: 6} 
   );
 
   console.log(response4);
 
-  const responseQ = await contract.query.get_room({room_id:"nignite"});
+  const responseQ = await contract.query.room({room_id: 1});
   console.log(responseQ);
 
   const response5 = await contract.tx.play(
-    {account: contract_owner, transferAmount: transferAmount},{ room_id: "nignite", player_move: "X", position: 3} 
+    {account: contract_owner, transferAmount: transferAmount},{ room_id: 1, player_move: "X", position: 3} 
   );
 
   console.log(response5);
 
   const response6 = await contract.tx.play(
-    {account: contract_owner, transferAmount: transferAmount},{ room_id: "nignite", player_move: "O", position: 8} 
+    {account: contract_owner, transferAmount: transferAmount},{ room_id: 1, player_move: "O", position: 8} 
   );
 
   console.log(response6);
 
   const response7 = await contract.tx.play(
-    {account: contract_owner, transferAmount: transferAmount},{ room_id: "nignite", player_move: "X", position: 5} 
+    {account: contract_owner, transferAmount: transferAmount},{ room_id: 1, player_move: "X", position: 5} 
   );
 
   console.log(response7);
 
-  const responseQ2 = await contract.query.get_room({room_id:"nignite"});
+  const responseQ2 = await contract.query.room({room_id: 1});
   console.log(responseQ2);
 
   const response8 = await contract.tx.play(
-    {account: contract_owner, transferAmount: transferAmount},{ room_id: "nignite", player_move: "O", position: 7} 
+    {account: contract_owner, transferAmount: transferAmount},{ room_id: 1, player_move: "O", position: 7} 
   );
 
   console.log(response8);
 
-  const responseQ3 = await contract.query.get_room({room_id:"nignite"});
+  const responseQ3 = await contract.query.room({room_id: 1});
   console.log(responseQ3);
 
   

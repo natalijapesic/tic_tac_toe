@@ -5,17 +5,30 @@
     {
       "type": "object",
       "required": [
-        "get_room"
+        "count_room"
       ],
       "properties": {
-        "get_room": {
+        "count_room": {
+          "type": "object"
+        }
+      }
+    },
+    {
+      "type": "object",
+      "required": [
+        "room"
+      ],
+      "properties": {
+        "room": {
           "type": "object",
           "required": [
             "room_id"
           ],
           "properties": {
             "room_id": {
-              "type": "string"
+              "type": "integer",
+              "format": "uint16",
+              "minimum": 0.0
             }
           }
         }

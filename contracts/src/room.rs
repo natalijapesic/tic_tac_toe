@@ -1,12 +1,17 @@
-use cosmwasm_std::HumanAddr;
+use cosmwasm_std::{HandleResponse, HumanAddr, StdError, StdResult, Storage};
+use cosmwasm_storage::{
+    PrefixedStorage, ReadonlyPrefixedStorage, ReadonlyTypedStorage, TypedStorage,
+};
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
+
+use crate::custom_error::CustomError;
 
 pub static ROOM_KEY: &[u8] = b"room";
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub struct Room {
-    pub id: u32,
+    pub id: u16,
 
     pub name: String,
 
@@ -16,7 +21,7 @@ pub struct Room {
 
     pub o_player: HumanAddr,
 
-    pub next_move: Move,
+    pub current_player: HumanAddr,
 
     pub count_move: u16,
 
@@ -26,17 +31,17 @@ pub struct Room {
 }
 
 impl Room {
-    pub fn new(id: u32, name: String, x_player: HumanAddr, o_player: HumanAddr) -> Self {
+    pub fn new(id: u16, name: String, x_player: HumanAddr, o_player: HumanAddr) -> Self {
         Self {
             id,
 
             count_move: 9,
 
-            x_player,
+            x_player: x_player.clone(),
 
             o_player,
 
-            next_move: Move::X,
+            current_player: x_player.clone(),
 
             result: None,
 
@@ -46,6 +51,54 @@ impl Room {
 
             state: GameState::Playing,
         }
+    }
+
+    pub fn check_winner<S: Storage>(
+        &mut self,
+        position: u8,
+        player_move: &Move,
+        storage: &mut S,
+    ) -> StdResult<bool> {
+        self.current_player = if *player_move == Move::O {
+            self.x_player.clone()
+        } else {
+            self.o_player.clone()
+        };
+
+        //check row
+        if self.check_line(position / 3 * 3, 0, *player_move, 1) {
+            self.save(storage)?;
+
+            return Ok(true);
+        }
+
+        //check column
+        if self.check_line(position % 3, 0, *player_move, 3) {
+            self.save(storage)?;
+
+            return Ok(true);
+        }
+
+        //check diagonals
+        if position % 2 == 0 {
+            if position != 2 && position != 6 {
+                if self.check_line(0, 0, *player_move, 4) {
+                    self.save(storage)?;
+
+                    return Ok(true);
+                }
+            }
+
+            if position != 0 && position != 8 {
+                if self.check_line(2, 0, *player_move, 2) {
+                    self.save(storage)?;
+
+                    return Ok(true);
+                }
+            }
+        }
+
+        Ok(false)
     }
 
     pub fn check_line(
@@ -66,8 +119,8 @@ impl Room {
 
         if line == 3 {
             match player_move {
-                Move::X => self.result = GameResult::XWin,
-                Move::O => self.result = GameResult::OWin,
+                Move::X => self.result = Some(GameResult::XWin),
+                Move::O => self.result = Some(GameResult::OWin),
             }
 
             self.count_move -= 1;
@@ -75,7 +128,33 @@ impl Room {
             return true;
         }
 
-        false
+        return false;
+    }
+
+    pub fn validate(&self, sender: &HumanAddr, position: u8) -> Result<HandleResponse, StdError> {
+        if self.state != GameState::Playing {
+            return CustomError::RoomState.message();
+        }
+
+        if self.current_player != *sender {
+            return CustomError::CurrentPlayer.message();
+        }
+
+        if self.board[position as usize].is_some() {
+            return CustomError::InitPosition.message();
+        }
+
+        return Ok(HandleResponse::default());
+    }
+
+    pub fn save<S: Storage>(&self, storage: &mut S) -> StdResult<()> {
+        let mut space = PrefixedStorage::new(ROOM_KEY, storage);
+        TypedStorage::new(&mut space).save(&self.id.to_be_bytes(), self)
+    }
+
+    pub fn load<S: Storage>(id: u16, storage: &S) -> StdResult<Room> {
+        let space = ReadonlyPrefixedStorage::new(ROOM_KEY, storage);
+        ReadonlyTypedStorage::new(&space).load(&id.to_be_bytes())
     }
 }
 

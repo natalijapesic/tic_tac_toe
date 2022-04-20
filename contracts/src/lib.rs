@@ -1,7 +1,8 @@
 pub mod contract;
 pub mod msg;
-pub mod state;
 pub mod room;
+pub mod state;
+pub mod custom_error;
 
 #[cfg(target_arch = "wasm32")]
 mod wasm {
