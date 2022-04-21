@@ -5,9 +5,7 @@ use serde::{Deserialize, Serialize};
 use crate::room::{GameResult, Move};
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
-pub struct InitMsg {
-    pub count_room: u16,
-}
+pub struct InitMsg {}
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 #[serde(rename_all = "snake_case")]
@@ -29,10 +27,14 @@ pub enum HandleMsg {
 #[serde(rename_all = "snake_case")]
 pub enum QueryMsg {
     CountRoom {},
-    Room { room_id: u16 },
-    Rooms { items_per_page: u16, page_number: u16 },
+    Room {
+        room_id: u16,
+    },
+    Rooms {
+        items_per_page: u16,
+        page_number: u16,
+    },
 }
-
 
 // We define a custom struct for each query response
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]

@@ -158,7 +158,7 @@ impl Room {
 
     pub fn load<S: Storage>(id: u16, storage: &S) -> StdResult<Room>{
         let space = ReadonlyPrefixedStorage::new(ROOM_KEY, storage);
-        let bin_room = to_binary(&space.get(&id.to_be_bytes()))?;
+        let bin_room = to_binary(&space.get(&id.to_string().as_bytes()))?;
         let room = from_binary::<Room>(&bin_room)?;
         Ok(room)
     }

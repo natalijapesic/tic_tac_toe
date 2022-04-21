@@ -1,11 +1,11 @@
 use cosmwasm_std::{
-    to_binary, Api, Binary, Env, Extern, HandleResponse, HumanAddr, InitResponse, Querier,
-    StdResult, Storage, from_binary,
+    from_binary, to_binary, Api, Binary, Env, Extern, HandleResponse, HumanAddr, InitResponse,
+    Querier, StdResult, Storage,
 };
 
 use crate::custom_error::CustomError;
 use crate::msg::{HandleMsg, InitMsg, QueryMsg};
-use crate::room::{GameResult, Move, Room, GameState, ROOM_COUNT};
+use crate::room::{GameResult, GameState, Move, Room, ROOM_COUNT};
 use crate::state::{config, State};
 
 pub fn init<S: Storage, A: Api, Q: Querier>(
@@ -13,11 +13,11 @@ pub fn init<S: Storage, A: Api, Q: Querier>(
     env: Env,
     _msg: InitMsg,
 ) -> StdResult<InitResponse> {
+    let count_room = 0;
 
-    deps.storage.set(ROOM_COUNT, Default::default());
-    let state = State::new(
-        deps.api.canonical_address(&env.message.sender)?,
-    );
+    deps.storage
+        .set(ROOM_COUNT, &count_room.to_string().as_bytes());
+    let state = State::new(deps.api.canonical_address(&env.message.sender)?);
 
     config(&mut deps.storage).save(&state)?;
 
@@ -44,7 +44,6 @@ pub fn handle<S: Storage, A: Api, Q: Querier>(
     }
 }
 
-
 pub fn try_create_room<S: Storage, A: Api, Q: Querier>(
     deps: &mut Extern<S, A, Q>,
     _env: Env,
@@ -52,8 +51,7 @@ pub fn try_create_room<S: Storage, A: Api, Q: Querier>(
     x_player: HumanAddr,
     o_player: HumanAddr,
 ) -> StdResult<HandleResponse> {
-
-    let mut count_room = query_count_room(deps)?;
+    let mut count_room = query_count_room(deps).expect("problem1");
 
     let room = Room::new(count_room, name, x_player, o_player);
 
@@ -61,7 +59,8 @@ pub fn try_create_room<S: Storage, A: Api, Q: Querier>(
 
     count_room += 1;
 
-    deps.storage.set(ROOM_COUNT, &count_room.to_be_bytes());
+    deps.storage
+        .set(ROOM_COUNT, &count_room.to_string().as_bytes());
 
     return Ok(HandleResponse::default());
 }
@@ -115,7 +114,10 @@ pub fn query<S: Storage, A: Api, Q: Querier>(
     match msg {
         QueryMsg::Room { room_id } => to_binary(&query_room(deps, room_id)?),
         QueryMsg::CountRoom {} => to_binary(&query_count_room(deps)?),
-        QueryMsg::Rooms { items_per_page, page_number } => to_binary(&query_rooms(deps, items_per_page, page_number)?),
+        QueryMsg::Rooms {
+            items_per_page,
+            page_number,
+        } => to_binary(&query_rooms(deps, items_per_page, page_number)?),
     }
 }
 
@@ -138,13 +140,9 @@ fn query_rooms<S: Storage, A: Api, Q: Querier>(
     Ok(rooms)
 }
 
-fn query_count_room<S: Storage, A: Api, Q: Querier>(
-    deps: &Extern<S, A, Q>,
-) -> StdResult<u16> {
-    
+fn query_count_room<S: Storage, A: Api, Q: Querier>(deps: &Extern<S, A, Q>) -> StdResult<u16> {
     let count_room_bin = to_binary(&deps.storage.get(ROOM_COUNT).unwrap())?;
     let count_room = from_binary::<u8>(&count_room_bin)? as u16;
-
 
     Ok(count_room)
 }
