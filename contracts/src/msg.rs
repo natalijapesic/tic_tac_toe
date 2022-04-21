@@ -33,10 +33,6 @@ pub enum QueryMsg {
     Rooms { items_per_page: u16, page_number: u16 },
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
-pub struct CountRoomResponse {
-    pub count_room: u16,
-}
 
 // We define a custom struct for each query response
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
