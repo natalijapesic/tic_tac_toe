@@ -1,14 +1,15 @@
-use cosmwasm_std::{HandleResponse, HumanAddr, StdError, StdResult, Storage, ReadonlyStorage};
+use cosmwasm_std::{HandleResponse, HumanAddr, StdError, StdResult, Storage, ReadonlyStorage, to_binary, to_vec, from_binary};
 use cosmwasm_storage::{
     PrefixedStorage, ReadonlyPrefixedStorage, ReadonlyTypedStorage, TypedStorage,
 };
 
 use schemars::JsonSchema;
-use serde::{Deserialize, Serialize};
+use serde::{Deserialize, Serialize, de::DeserializeOwned};
 
 use crate::custom_error::CustomError;
 
 pub static ROOM_KEY: &[u8] = b"room";
+pub static ROOM_ID: &[u8] = b"room_id";
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub struct Room {
@@ -149,15 +150,17 @@ impl Room {
         return Ok(HandleResponse::default());
     }
 
-    pub fn save(&self, storage: &mut impl Storage) -> StdResult<()> {
+    pub fn save(&self, storage: &mut impl Storage){
         
         let mut space = PrefixedStorage::new(ROOM_KEY, storage);
-        TypedStorage::new(&mut space).save(&self.id.to_string().as_bytes(), self)
+        storage.set(&self.id.to_string().as_bytes(), &to_vec(self).unwrap());
     }
 
-    pub fn load<S: Storage>(id: u16, storage: &S) -> StdResult<Room> {
+    pub fn load<S: Storage>(id: u16, storage: &S) {
         let space = ReadonlyPrefixedStorage::new(ROOM_KEY, storage);
-        ReadonlyTypedStorage::new(&space).load(&id.to_string().as_bytes())
+        let bin_room = to_binary(&storage.get(&id.to_string().as_bytes()).unwrap()).unwrap();
+        let room = from_binary<Room: DeserializeOwned>(&bin_room);
+        //ReadonlyTypedStorage::new(&space).load(&id.to_string().as_bytes())
     }
 }
 

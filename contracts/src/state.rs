@@ -13,17 +13,13 @@ pub static CONFIG_KEY: &[u8] = b"config";
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub struct State {
-    pub count_room: u16,
-    pub current_page: u16,
     pub admin: CanonicalAddr,
 }
 
 impl State {
-    pub fn new(count_room: u16, admin: CanonicalAddr) -> Self {
+    pub fn new(admin: CanonicalAddr) -> Self {
         Self {
-            count_room,
             admin,
-            current_page: 0,
         }
     }
 
@@ -35,14 +31,14 @@ impl State {
     ) -> StdResult<Vec<Room>> {
         let start = page_number * items_per_page;
 
-        if start > self.count_room {
+        if start > 10{
             panic!("Position out of bounds");
         }
 
         let mut end = start + items_per_page;
 
-        if end > self.count_room {
-            end = self.count_room;
+        if end > 10{
+            end = 10;
         }
         let mut page = vec![];
 
