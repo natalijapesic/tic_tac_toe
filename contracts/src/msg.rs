@@ -30,6 +30,7 @@ pub enum HandleMsg {
 pub enum QueryMsg {
     CountRoom {},
     Room { room_id: u16 },
+    Page { items_per_page: u16, page_number: u16 },
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]

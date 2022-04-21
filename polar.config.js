@@ -1,11 +1,11 @@
 const accounts = [
   {
     name: 'a',
-    address: 'secret1s8c9p6vzxqucuh7s4egl9h62akpsnnuegppuy6',
-    mnemonic: 'enlist spoil lake cactus lion toddler tooth design sorry arrow reflect crack want brown endless keen shoe captain sunny disagree pizza giraffe easy rocket'},
+    address: 'secret1w2d4l8868d38gsrcf9crgsn7utpvrtwj3kk0ty',
+    mnemonic: 'swarm will dune snake page tree sign surge amount tumble squeeze false index version drift else special enter retreat world empower quality pudding print'},
   { name: 'b',
-    address: 'secret16jpy8nlezmd6nkv6sqa2a2rdflltf8xd3z8r9y',
-    mnemonic: 'whisper sun floor awful peace pony noodle gate silent mistake spot seat civil crucial leaf taxi solid brown program author emerge false frequent jewel'
+    address: 'secret1x00hksfvsdka4m7fxcx6umxdlwkrr2j64p76f6',
+    mnemonic: 'chicken vital pond around safe vendor monkey post strike couple session equip camera soul kiss zebra horn roof voyage impose ethics expose crisp blast'
   }
 ];
 

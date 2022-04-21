@@ -4,13 +4,19 @@
   "type": "object",
   "required": [
     "admin",
-    "count_room"
+    "count_room",
+    "current_page"
   ],
   "properties": {
     "admin": {
       "$ref": "#/definitions/CanonicalAddr"
     },
     "count_room": {
+      "type": "integer",
+      "format": "uint16",
+      "minimum": 0.0
+    },
+    "current_page": {
       "type": "integer",
       "format": "uint16",
       "minimum": 0.0

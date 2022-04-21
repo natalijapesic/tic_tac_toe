@@ -33,6 +33,33 @@
           }
         }
       }
+    },
+    {
+      "type": "object",
+      "required": [
+        "page"
+      ],
+      "properties": {
+        "page": {
+          "type": "object",
+          "required": [
+            "items_per_page",
+            "page_number"
+          ],
+          "properties": {
+            "items_per_page": {
+              "type": "integer",
+              "format": "uint16",
+              "minimum": 0.0
+            },
+            "page_number": {
+              "type": "integer",
+              "format": "uint16",
+              "minimum": 0.0
+            }
+          }
+        }
+      }
     }
   ]
 }

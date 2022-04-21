@@ -5,7 +5,7 @@ use cosmwasm_std::{
 
 use crate::custom_error::CustomError;
 use crate::msg::{CountRoomResponse, HandleMsg, InitMsg, QueryMsg};
-use crate::room::{GameResult, Move, Room};
+use crate::room::{GameResult, Move, Room, GameState};
 use crate::state::{config, config_read, State};
 
 pub fn init<S: Storage, A: Api, Q: Querier>(
@@ -63,11 +63,14 @@ pub fn try_create_room<S: Storage, A: Api, Q: Querier>(
     x_player: HumanAddr,
     o_player: HumanAddr,
 ) -> StdResult<HandleResponse> {
-    let room_id = try_increment(deps, env)?;
 
-    let room = Room::new(room_id, name, x_player, o_player);
+    let room_id = query_count_room(deps)?;
+
+    let room = Room::new(room_id.count_room, name, x_player, o_player);
 
     room.save(&mut deps.storage)?;
+
+    try_increment(deps, env)?;
 
     return Ok(HandleResponse::default());
 }
@@ -106,6 +109,7 @@ pub fn try_play<S: Storage, A: Api, Q: Querier>(
     room.count_move -= 1;
     if room.count_move == 0 {
         room.result = Some(GameResult::Draw);
+        room.state = GameState::GameOver;
     }
 
     room.save(&mut deps.storage)?;
@@ -120,6 +124,7 @@ pub fn query<S: Storage, A: Api, Q: Querier>(
     match msg {
         QueryMsg::Room { room_id } => to_binary(&query_room(deps, room_id)?),
         QueryMsg::CountRoom {} => to_binary(&query_count_room(deps)?),
+        QueryMsg::Page { items_per_page, page_number } => to_binary(&query_page(deps, items_per_page, page_number)?),
     }
 }
 
@@ -130,6 +135,18 @@ fn query_room<S: Storage, A: Api, Q: Querier>(
     let room = Room::load(room_id, &deps.storage)?;
 
     Ok(room)
+}
+
+fn query_page<S: Storage, A: Api, Q: Querier>(
+    deps: &Extern<S, A, Q>,
+    items_per_page: u16,
+    page_number: u16,
+) -> StdResult<Vec<Room>> {
+
+    let mut state = config_read(&deps.storage).load()?;
+    let rooms = state.load_page(items_per_page, page_number, &deps.storage)?;
+
+    Ok(rooms)
 }
 
 fn query_count_room<S: Storage, A: Api, Q: Querier>(

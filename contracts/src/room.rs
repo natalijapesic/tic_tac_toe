@@ -1,7 +1,8 @@
-use cosmwasm_std::{HandleResponse, HumanAddr, StdError, StdResult, Storage};
+use cosmwasm_std::{HandleResponse, HumanAddr, StdError, StdResult, Storage, ReadonlyStorage};
 use cosmwasm_storage::{
     PrefixedStorage, ReadonlyPrefixedStorage, ReadonlyTypedStorage, TypedStorage,
 };
+
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
@@ -32,6 +33,7 @@ pub struct Room {
 
 impl Room {
     pub fn new(id: u16, name: String, x_player: HumanAddr, o_player: HumanAddr) -> Self {
+        
         Self {
             id,
 
@@ -113,8 +115,14 @@ impl Room {
 
         if line == 3 {
             match player_move {
-                Move::X => self.result = Some(GameResult::XWin),
-                Move::O => self.result = Some(GameResult::OWin),
+                Move::X => {
+                    self.result = Some(GameResult::XWin);
+                    self.state = GameState::GameOver;
+                },
+                Move::O => {
+                    self.state = GameState::GameOver;
+                    self.result = Some(GameResult::OWin);
+                },
             }
 
             self.count_move -= 1;
@@ -141,7 +149,8 @@ impl Room {
         return Ok(HandleResponse::default());
     }
 
-    pub fn save<S: Storage>(&self, storage: &mut S) -> StdResult<()> {
+    pub fn save(&self, storage: &mut impl Storage) -> StdResult<()> {
+        
         let mut space = PrefixedStorage::new(ROOM_KEY, storage);
         TypedStorage::new(&mut space).save(&self.id.to_string().as_bytes(), self)
     }

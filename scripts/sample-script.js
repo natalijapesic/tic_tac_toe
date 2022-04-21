@@ -18,11 +18,25 @@ async function run() {
   console.log(contract_info);
 
 
-  const create_room = await contract.tx.create_room({ account: contract_owner }, { name: "nignite", x_player: "secret1s8c9p6vzxqucuh7s4egl9h62akpsnnuegppuy6", o_player: "secret16jpy8nlezmd6nkv6sqa2a2rdflltf8xd3z8r9y" });
-  console.log(create_room);
+  const create_room1 = await contract.tx.create_room({ account: contract_owner }, { name: "nignite1", x_player: "secret1w2d4l8868d38gsrcf9crgsn7utpvrtwj3kk0ty", o_player: "secret1x00hksfvsdka4m7fxcx6umxdlwkrr2j64p76f6" });
+  const create_room2 = await contract.tx.create_room({ account: contract_owner }, { name: "nignite2", x_player: "secret1w2d4l8868d38gsrcf9crgsn7utpvrtwj3kk0ty", o_player: "secret1x00hksfvsdka4m7fxcx6umxdlwkrr2j64p76f6" });
+  const create_room3 = await contract.tx.create_room({ account: contract_owner }, { name: "nignite3", x_player: "secret1w2d4l8868d38gsrcf9crgsn7utpvrtwj3kk0ty", o_player: "secret1x00hksfvsdka4m7fxcx6umxdlwkrr2j64p76f6" });
+  const create_room4 = await contract.tx.create_room({ account: contract_owner }, { name: "nignite4", x_player: "secret1w2d4l8868d38gsrcf9crgsn7utpvrtwj3kk0ty", o_player: "secret1x00hksfvsdka4m7fxcx6umxdlwkrr2j64p76f6" });
+  const create_room5 = await contract.tx.create_room({ account: contract_owner }, { name: "nignite5", x_player: "secret1w2d4l8868d38gsrcf9crgsn7utpvrtwj3kk0ty", o_player: "secret1x00hksfvsdka4m7fxcx6umxdlwkrr2j64p76f6" });
+  const create_room6 = await contract.tx.create_room({ account: contract_owner }, { name: "nignite6", x_player: "secret1w2d4l8868d38gsrcf9crgsn7utpvrtwj3kk0ty", o_player: "secret1x00hksfvsdka4m7fxcx6umxdlwkrr2j64p76f6" });
+  const create_room7 = await contract.tx.create_room({ account: contract_owner }, { name: "nignite7", x_player: "secret1w2d4l8868d38gsrcf9crgsn7utpvrtwj3kk0ty", o_player: "secret1x00hksfvsdka4m7fxcx6umxdlwkrr2j64p76f6" });
+  const create_room8 = await contract.tx.create_room({ account: contract_owner }, { name: "nignite8", x_player: "secret1w2d4l8868d38gsrcf9crgsn7utpvrtwj3kk0ty", o_player: "secret1x00hksfvsdka4m7fxcx6umxdlwkrr2j64p76f6" });
+  const create_room9 = await contract.tx.create_room({ account: contract_owner }, { name: "nignite9", x_player: "secret1w2d4l8868d38gsrcf9crgsn7utpvrtwj3kk0ty", o_player: "secret1x00hksfvsdka4m7fxcx6umxdlwkrr2j64p76f6" });
+  const create_room10 = await contract.tx.create_room({ account: contract_owner }, { name: "nignite10", x_player: "secret1w2d4l8868d38gsrcf9crgsn7utpvrtwj3kk0ty", o_player: "secret1x00hksfvsdka4m7fxcx6umxdlwkrr2j64p76f6" });
 
   const response = await contract.query.room({room_id: 1});
   console.log(response);
+
+  const page1 = await contract.query.page({items_per_page: 2, page_number: 0});
+  console.log(page1)
+
+  const page2 = await contract.query.page({items_per_page: 2, page_number: 3});
+  console.log(page2)
 
   const transferAmount = [{"denom": "uscrt", "amount": "15000000"}] // 15 SCRT
   const customFees = { // custom fees
