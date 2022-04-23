@@ -5,7 +5,7 @@ use cosmwasm_std::{
 
 use crate::custom_error::CustomError;
 use crate::msg::{HandleMsg, InitMsg, QueryMsg};
-use crate::room::{GameResult, GameState, Move, Room, ROOM_COUNT};
+use crate::room::{Move, Room, ROOM_COUNT};
 use crate::state::{config, State};
 
 pub fn init<S: Storage, A: Api, Q: Querier>(
@@ -13,10 +13,8 @@ pub fn init<S: Storage, A: Api, Q: Querier>(
     env: Env,
     _msg: InitMsg,
 ) -> StdResult<InitResponse> {
-    let count_room = 0;
 
-    deps.storage
-        .set(ROOM_COUNT, &count_room.to_string().as_bytes());
+    deps.storage.set(ROOM_COUNT, Default::default());
     let state = State::new(deps.api.canonical_address(&env.message.sender)?);
 
     config(&mut deps.storage).save(&state)?;
@@ -51,19 +49,20 @@ pub fn try_create_room<S: Storage, A: Api, Q: Querier>(
     x_player: HumanAddr,
     o_player: HumanAddr,
 ) -> StdResult<HandleResponse> {
-    let mut count_room = query_count_room(deps).expect("problem1");
+    let mut count_room = query_count_room(deps)?;
 
     let room = Room::new(count_room, name, x_player, o_player);
 
-    room.save(&mut deps.storage);
+    room.save(&mut deps.storage)?;
 
     count_room += 1;
 
     deps.storage
-        .set(ROOM_COUNT, &count_room.to_string().as_bytes());
+        .set(ROOM_COUNT, &to_binary(&count_room)?.as_slice());
 
     return Ok(HandleResponse::default());
 }
+
 
 pub fn try_play<S: Storage, A: Api, Q: Querier>(
     deps: &mut Extern<S, A, Q>,
@@ -76,33 +75,9 @@ pub fn try_play<S: Storage, A: Api, Q: Querier>(
         return CustomError::Position.message();
     }
 
-    let mut room = Room::load(room_id, &deps.storage).expect("Room is not loaded");
+    let mut room = Room::load(room_id, &deps.storage)?;
 
-    room.validate(&env.message.sender, position)?;
-
-    room.current_player = if player_move == Move::O {
-        room.x_player.clone()
-    } else {
-        room.o_player.clone()
-    };
-
-    room.board[position as usize] = Some(player_move);
-
-    let result = room
-        .check_winner(position, &player_move, &mut deps.storage)
-        .expect("Room is not saved");
-
-    if result {
-        return Ok(HandleResponse::default());
-    }
-
-    room.count_move -= 1;
-    if room.count_move == 0 {
-        room.result = Some(GameResult::Draw);
-        room.state = GameState::GameOver;
-    }
-
-    room.save(&mut deps.storage);
+    room.play(&mut deps.storage, &env.message.sender, position, &player_move)?;
 
     Ok(HandleResponse::default())
 }
@@ -135,14 +110,14 @@ fn query_rooms<S: Storage, A: Api, Q: Querier>(
     items_per_page: u16,
     page_number: u16,
 ) -> StdResult<Vec<Room>> {
-    let rooms = Room::load_page(items_per_page, page_number, &deps.storage)?;
+    let rooms = Room::load_rooms(items_per_page, page_number, &deps.storage)?;
 
     Ok(rooms)
 }
 
 fn query_count_room<S: Storage, A: Api, Q: Querier>(deps: &Extern<S, A, Q>) -> StdResult<u16> {
-    let count_room_bin = to_binary(&deps.storage.get(ROOM_COUNT).unwrap())?;
-    let count_room = from_binary::<u8>(&count_room_bin)? as u16;
+    let count_room_bin = to_binary(&deps.storage.get(ROOM_COUNT))?;
+    let count_room = from_binary::<u16>(&count_room_bin)?;
 
     Ok(count_room)
 }
