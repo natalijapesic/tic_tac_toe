@@ -1,4 +1,4 @@
-use cosmwasm_std::{HandleResponse, HumanAddr, StdError, StdResult, Storage, ReadonlyStorage, to_binary, to_vec, from_binary};
+use cosmwasm_std::{HandleResponse, HumanAddr, StdError, StdResult, Storage, ReadonlyStorage, to_binary, to_vec, from_binary, Binary};
 use cosmwasm_storage::{
     PrefixedStorage, ReadonlyPrefixedStorage,
 };
@@ -194,8 +194,8 @@ impl Room {
 
     pub fn load<S: Storage>(id: u16, storage: &S) -> StdResult<Room>{
         let space = ReadonlyPrefixedStorage::new(ROOM_KEY, storage);
-        let bin_room = to_binary(&space.get(&to_binary(&id)?.as_slice())).expect("Room is not loaded");
-        let room = from_binary::<Room>(&bin_room)?;
+        let bin_room = Binary(space.get(&to_binary(&id)?.as_slice()).unwrap());
+        let room:Room = from_binary(&bin_room)?;
         Ok(room)
     }
 
@@ -222,7 +222,7 @@ impl Room {
         let space = ReadonlyPrefixedStorage::new(ROOM_KEY, storage);
 
         for id in start..end {
-            let bin_room = to_binary(&space.get(&to_binary(&id)?.as_slice())).expect("Room is not loaded");
+            let bin_room = Binary(space.get(&to_binary(&id)?.as_slice()).unwrap());
             rooms.push(from_binary::<Room>(&bin_room)?);
         }
 

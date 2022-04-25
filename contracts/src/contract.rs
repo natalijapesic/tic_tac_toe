@@ -14,7 +14,9 @@ pub fn init<S: Storage, A: Api, Q: Querier>(
     _msg: InitMsg,
 ) -> StdResult<InitResponse> {
 
-    deps.storage.set(ROOM_COUNT, Default::default());
+    //deps.storage.set(ROOM_COUNT, Default::default());
+    //let convert = to_binary(&0)?.as_slice();
+    deps.storage.set(ROOM_COUNT, to_binary(&0)?.as_slice());
     let state = State::new(deps.api.canonical_address(&env.message.sender)?);
 
     config(&mut deps.storage).save(&state)?;
@@ -116,104 +118,123 @@ fn query_rooms<S: Storage, A: Api, Q: Querier>(
 }
 
 fn query_count_room<S: Storage, A: Api, Q: Querier>(deps: &Extern<S, A, Q>) -> StdResult<u16> {
-    let count_room_bin = to_binary(&deps.storage.get(ROOM_COUNT))?;
-    let count_room = from_binary::<u16>(&count_room_bin)?;
+    let count_room_bin = Binary(deps.storage.get(ROOM_COUNT).unwrap());
+    let count_room: u16 = from_binary::<u16>(&count_room_bin)?;
 
     Ok(count_room)
 }
 
 #[cfg(test)]
 mod tests {
+    use crate::room::GameState;
+
     use super::*;
-    use cosmwasm_std::testing::{mock_dependencies, mock_env};
-    use cosmwasm_std::{coins, from_binary};
+    use cosmwasm_std::testing::{mock_dependencies, mock_env, MockApi, MockQuerier};
+    use cosmwasm_std::{coins, from_binary, MemoryStorage};
 
-    // fn init_room() -> Extern<
-    //     cosmwasm_std::MemoryStorage,
-    //     cosmwasm_std::testing::MockApi,
-    //     cosmwasm_std::testing::MockQuerier,
-    // > {
-    //     let mut deps = mock_dependencies(20, &[]);
-    //     let msg = InitMsg {};
-    //     let env = mock_env("albis", &coins(2, "token"));
-    //     let _res = init(&mut deps, env, msg).unwrap();
 
-    //     let env = mock_env("anyone", &coins(2, "token"));
-    //     let msg = HandleMsg::CreateRoom {
-    //         room_id: "tuturu".to_string(),
-    //         x_player: HumanAddr::from("albis"),
-    //         o_player: HumanAddr::from("balbis"),
-    //     };
-    //     let _res = handle(&mut deps, env, msg).unwrap();
+    fn init_game() -> Extern<MemoryStorage, MockApi, MockQuerier> {
 
-    //     deps
-    // }
-    // #[test]
-    // fn create_room() {
-    //     let deps = init_room();
+        let mut deps = mock_dependencies(20, &[]);
+        let msg = InitMsg {};
+        let env = mock_env("adam", &coins(2, "token"));
+        let _res = init(&mut deps, env, msg).unwrap();
 
-    //     let res = query(
-    //         &deps,
-    //         QueryMsg::GetRoom {
-    //             room_id: "tuturu".to_string(),
-    //         },
-    //     )
-    //     .unwrap();
+        deps
+    }
 
-    //     let response: RoomResponse = from_binary(&res).unwrap();
-    //     let expected_response = RoomResponse {
-    //         id: "tuturu".to_string(),
-    //         board: [None; 9],
-    //         count_move: 9,
-    //         result: GameResult::Playing,
-    //         next_move: Move::X,
-    //         x_player: HumanAddr::from("albis"),
-    //         o_player: HumanAddr::from("balbis"),
-    //     };
-    //     assert_eq!(expected_response, response);
-    // }
+    fn create_room(id: u16) -> Extern<MemoryStorage, MockApi, MockQuerier>
+    {
+        let mut deps = init_game();
+        let env = mock_env("anyone", &coins(2, "token"));
+        let msg = HandleMsg::CreateRoom {
+            name: "nignite".to_string(),
+            x_player: HumanAddr::from("adam"),
+            o_player: HumanAddr::from("eva"),
+        };
 
-    // #[test]
-    // fn play() {
-    //     let mut deps = init_room();
+        let _res = handle(&mut deps, env, msg).unwrap();
 
-    //     let env = mock_env("anyone", &coins(2, "token"));
-    //     let msg = HandleMsg::Play {
-    //         room_id: "tuturu".to_string(),
-    //         player_move: Move::X,
-    //         position: 4,
-    //     };
+        let res = query(
+            &deps,
+            QueryMsg::Room {
+                room_id: id,
+            },
+        )
+        .unwrap();
 
-    //     let _res = handle(&mut deps, env, msg).unwrap();
+        let response: Room = from_binary(&res).unwrap();
+        let expected_response = Room {
+            id: 0,
+            name: "nignite".to_string(),
+            board: [None; 9],
+            count_move: 9,
+            result: None,
+            current_player: HumanAddr::from("adam"),
+            x_player: HumanAddr::from("adam"),
+            o_player: HumanAddr::from("eva"),
+            state: GameState::Playing
+        };
 
-    //     let res = query(
-    //         &deps,
-    //         QueryMsg::GetRoom {
-    //             room_id: "tuturu".to_string(),
-    //         },
-    //     )
-    //     .unwrap();
+        assert_eq!(expected_response, response);
 
-    //     let response: RoomResponse = from_binary(&res).unwrap();
-    //     let expected_response = RoomResponse {
-    //         id: "tuturu".to_string(),
-    //         board: [
-    //             None,
-    //             None,
-    //             None,
-    //             None,
-    //             Some(Move::X),
-    //             None,
-    //             None,
-    //             None,
-    //             None,
-    //         ],
-    //         count_move: 8,
-    //         result: GameResult::Playing,
-    //         next_move: Move::O,
-    //         x_player: HumanAddr::from("albis"),
-    //         o_player: HumanAddr::from("balbis"),
-    //     };
-    //     assert_eq!(expected_response, response);
-    // }
+        deps
+    }
+
+
+    #[test]
+    fn create_room_test() {
+
+        create_room(0);        
+    }
+
+    #[test]
+    fn play_test() {
+
+        let mut deps = create_room(0);
+        
+        let env = mock_env("anyone", &coins(2, "token"));
+
+        let msg = HandleMsg::Play {
+            room_id: 0,
+            player_move: Move::X,
+            position: 4,
+        };
+
+        let _res = handle(&mut deps, env, msg).unwrap();
+
+        let res = query(
+            &deps,
+            QueryMsg::Room {
+                room_id: 0,
+            },
+        )
+        .unwrap();
+
+        let response: Room = from_binary(&res).unwrap();
+
+        let expected_response = Room {
+            id: 0,
+            name: "nignite".to_string(),
+            board: [
+                None,
+                None,
+                None,
+                None,
+                Some(Move::X),
+                None,
+                None,
+                None,
+                None,
+            ],
+            count_move: 8,
+            result: None,
+            current_player: HumanAddr::from("eva"),
+            x_player: HumanAddr::from("adam"),
+            o_player: HumanAddr::from("eva"),
+            state: GameState::Playing
+        };
+
+        assert_eq!(expected_response, response);
+    }
 }
