@@ -1,1 +1,0 @@
-/home/natalija/rust/tic_tac_toe/target/debug/libsample_project.so: /home/natalija/rust/tic_tac_toe/contracts/src/contract.rs /home/natalija/rust/tic_tac_toe/contracts/src/lib.rs /home/natalija/rust/tic_tac_toe/contracts/src/msg.rs /home/natalija/rust/tic_tac_toe/contracts/src/state.rs
